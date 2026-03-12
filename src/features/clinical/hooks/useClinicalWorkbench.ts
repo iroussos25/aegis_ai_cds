@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
   AnalysisTrace,
+  ClinicalReviewMessage,
   EvidenceItem,
   FhirBundle,
   FhirMode,
@@ -23,6 +24,12 @@ export function useClinicalWorkbench() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [evidence, setEvidence] = useState<EvidenceItem[]>([]);
   const [analysisTrace, setAnalysisTrace] = useState<AnalysisTrace | null>(null);
+  const [clinicalReviewInput, setClinicalReviewInput] = useState("");
+  const [clinicalReviewMessages, setClinicalReviewMessages] = useState<ClinicalReviewMessage[]>([]);
+  const [clinicalReviewLoading, setClinicalReviewLoading] = useState(false);
+  const [clinicalReviewError, setClinicalReviewError] = useState<string | null>(null);
+  const [clinicalReviewEvidence, setClinicalReviewEvidence] = useState<EvidenceItem[]>([]);
+  const [clinicalReviewTrace, setClinicalReviewTrace] = useState<AnalysisTrace | null>(null);
   const [rubricScores, setRubricScores] = useState<Record<string, Record<number, number>>>({});
 
   const [retrievalEnabled, setRetrievalEnabled] = useState(true);
@@ -71,6 +78,15 @@ export function useClinicalWorkbench() {
     setHistory([]);
   }, []);
 
+  const clearClinicalReview = useCallback(() => {
+    setClinicalReviewInput("");
+    setClinicalReviewMessages([]);
+    setClinicalReviewLoading(false);
+    setClinicalReviewError(null);
+    setClinicalReviewEvidence([]);
+    setClinicalReviewTrace(null);
+  }, []);
+
   const setRubricScore = useCallback((kitId: string, criterionIndex: number, score: number) => {
     setRubricScores((prev) => ({
       ...prev,
@@ -106,6 +122,7 @@ export function useClinicalWorkbench() {
     setHistory([]);
     setEvidence([]);
     setAnalysisTrace(null);
+    clearClinicalReview();
     setRubricScores({});
 
     setRetrievalEnabled(true);
@@ -123,12 +140,13 @@ export function useClinicalWorkbench() {
     setFhirError(null);
     setFhirResults([]);
     setFhirCount(0);
-  }, []);
+  }, [clearClinicalReview]);
 
   function cancelStreaming() {
     abortRef.current?.abort();
     abortRef.current = null;
     setIsLoading(false);
+    setClinicalReviewLoading(false);
   }
 
   async function indexCurrentContext() {
@@ -276,6 +294,120 @@ export function useClinicalWorkbench() {
     }
   }
 
+  async function submitClinicalReview(promptOverride?: string) {
+    const promptSnapshot = (promptOverride ?? clinicalReviewInput).trim();
+    if (!promptSnapshot || !context.trim() || clinicalReviewLoading) return;
+
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    const userMessage: ClinicalReviewMessage = {
+      id: crypto.randomUUID(),
+      role: "user",
+      content: promptSnapshot,
+      createdAt: new Date().toISOString(),
+    };
+
+    const assistantId = crypto.randomUUID();
+    const assistantMessage: ClinicalReviewMessage = {
+      id: assistantId,
+      role: "assistant",
+      content: "",
+      createdAt: new Date().toISOString(),
+    };
+
+    const priorMessages = clinicalReviewMessages.map(({ role, content }) => ({ role, content }));
+
+    setClinicalReviewLoading(true);
+    setClinicalReviewError(null);
+    setClinicalReviewInput("");
+    setClinicalReviewEvidence([]);
+    setClinicalReviewTrace(null);
+    setClinicalReviewMessages((prev) => [...prev, userMessage, assistantMessage]);
+
+    try {
+      const retrieved = await fetchEvidence(promptSnapshot);
+      const retrievalContext =
+        retrieved.length > 0
+          ? retrieved
+              .map(
+                (item) =>
+                  `[chunk ${item.chunkIndex} | score ${item.similarity.toFixed(3)} | source ${item.sourceLabel}]\n${item.content}`
+              )
+              .join("\n\n")
+          : context;
+
+      setClinicalReviewEvidence(retrieved);
+      setClinicalReviewTrace({
+        prompt: promptSnapshot,
+        contextSent: retrievalContext,
+        usedRetrieval: retrieved.length > 0,
+        indexedDocId,
+      });
+
+      const res = await fetch("/api/clinical-review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          context: retrievalContext,
+          messages: [...priorMessages, { role: "user", content: promptSnapshot }],
+        }),
+        signal: controller.signal,
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || `Clinical review failed (${res.status})`);
+      }
+
+      const reader = res.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (!reader) {
+        throw new Error("No response stream");
+      }
+
+      let streamedText = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        streamedText += chunk;
+        setClinicalReviewMessages((prev) =>
+          prev.map((message) =>
+            message.id === assistantId
+              ? { ...message, content: streamedText }
+              : message
+          )
+        );
+      }
+
+      const finalChunk = decoder.decode();
+      if (finalChunk) {
+        streamedText += finalChunk;
+        setClinicalReviewMessages((prev) =>
+          prev.map((message) =>
+            message.id === assistantId
+              ? { ...message, content: streamedText }
+              : message
+          )
+        );
+      }
+    } catch (error) {
+      setClinicalReviewMessages((prev) => prev.filter((message) => message.id !== assistantId));
+
+      if (error instanceof DOMException && error.name === "AbortError") {
+        setClinicalReviewError("Clinical review canceled");
+      } else {
+        setClinicalReviewError(error instanceof Error ? error.message : "Clinical review failed");
+      }
+    } finally {
+      abortRef.current = null;
+      setClinicalReviewLoading(false);
+    }
+  }
+
   async function uploadFile(file: File) {
     setUploadError(null);
     setUploading(true);
@@ -295,6 +427,7 @@ export function useClinicalWorkbench() {
         setIndexedDocId(null);
         setEvidence([]);
         setAnalysisTrace(null);
+        clearClinicalReview();
       }
     } catch {
       setUploadError("Network error - could not upload file");
@@ -355,6 +488,7 @@ export function useClinicalWorkbench() {
     setHistory([]);
     setIndexedDocId(null);
     setAnalysisTrace(null);
+    clearClinicalReview();
   }
 
   function startDemoMode(kit?: RecruiterKit) {
@@ -391,6 +525,13 @@ export function useClinicalWorkbench() {
     history,
     evidence,
     analysisTrace,
+    clinicalReviewInput,
+    setClinicalReviewInput,
+    clinicalReviewMessages,
+    clinicalReviewLoading,
+    clinicalReviewError,
+    clinicalReviewEvidence,
+    clinicalReviewTrace,
     rubricScores,
 
     retrievalEnabled,
@@ -419,6 +560,8 @@ export function useClinicalWorkbench() {
     searchFhir,
     loadRecruiterKit,
     clearHistory,
+    clearClinicalReview,
+    submitClinicalReview,
     setRubricScore,
     clearKitRubricScores,
     clearAllState,

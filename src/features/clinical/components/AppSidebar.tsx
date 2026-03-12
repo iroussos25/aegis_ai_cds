@@ -8,6 +8,7 @@ type SidebarProps = {
 
 const ITEMS: { key: Panel; label: string }[] = [
   { key: "workbench", label: "Clinical Workbench" },
+  { key: "clinical-review", label: "Clinical Review" },
   { key: "recruiter-kit", label: "Recruiter Test Kits" },
   { key: "fhir", label: "FHIR Explorer (Beta)" },
 ];
@@ -37,7 +38,7 @@ export function AppSidebar({ activePanel, setActivePanel }: SidebarProps) {
       </div>
 
       <div className="mt-4 rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-xs text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-400">
-        Tip: Load a recruiter kit, then switch back to Workbench for a guided live demo.
+        Tip: Load a recruiter kit, summarize it in Workbench, then move into Clinical Review for higher-level follow-up questions.
       </div>
     </Card>
   );

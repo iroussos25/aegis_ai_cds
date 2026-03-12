@@ -1,4 +1,11 @@
-export type Panel = "workbench" | "recruiter-kit" | "fhir";
+export type Panel = "workbench" | "clinical-review" | "recruiter-kit" | "fhir";
+
+export type ClinicalReviewMessage = {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  createdAt: string;
+};
 
 export type HistoryItem = {
   id: string;

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 import { AppSidebar } from "@/features/clinical/components/AppSidebar";
+import { ClinicalReviewPanel } from "@/features/clinical/components/ClinicalReviewPanel";
 import { ClinicalWorkbenchPanel } from "@/features/clinical/components/ClinicalWorkbenchPanel";
 import { DemoGuide } from "@/features/clinical/components/DemoGuide";
 import { FhirExplorerPanel } from "@/features/clinical/components/FhirExplorerPanel";
@@ -135,6 +136,32 @@ export default function Home() {
                   onCancelStreaming={vm.cancelStreaming}
                   onIndexContext={vm.indexCurrentContext}
                   onClearHistory={vm.clearHistory}
+                />
+              </motion.div>
+            )}
+
+            {activePanel === "clinical-review" && (
+              <motion.div
+                key="clinical-review"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2 }}
+              >
+                <ClinicalReviewPanel
+                  context={vm.context}
+                  fileName={vm.fileName}
+                  clinicalReviewInput={vm.clinicalReviewInput}
+                  setClinicalReviewInput={vm.setClinicalReviewInput}
+                  clinicalReviewMessages={vm.clinicalReviewMessages}
+                  clinicalReviewLoading={vm.clinicalReviewLoading}
+                  clinicalReviewError={vm.clinicalReviewError}
+                  clinicalReviewEvidence={vm.clinicalReviewEvidence}
+                  clinicalReviewTrace={vm.clinicalReviewTrace}
+                  retrievalEnabled={vm.retrievalEnabled}
+                  onSubmitClinicalReview={vm.submitClinicalReview}
+                  onCancelStreaming={vm.cancelStreaming}
+                  onClearClinicalReview={vm.clearClinicalReview}
                 />
               </motion.div>
             )}
