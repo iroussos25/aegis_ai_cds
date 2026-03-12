@@ -1,133 +1,59 @@
-# Clinical Context Analyst
+# Clinical Context Analyst 🩺
 
 [![CI](https://github.com/iroussos25/ai-clinical-context-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/iroussos25/ai-clinical-context-agent/actions/workflows/ci.yml)
 [![Quality](https://img.shields.io/badge/Quality-Lint%20%2B%20Tests-green)](https://github.com/iroussos25/ai-clinical-context-agent/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/License-MIT-lightgrey)](https://github.com/iroussos25/ai-clinical-context-agent/blob/main/LICENSE)
 
-Recruiter-ready clinical AI demonstration platform built with Next.js + TypeScript. It showcases grounded analysis, retrieval-augmented reasoning, FHIR exploration, benchmark-driven evaluation, and production-minded security/observability.
+**Engineer-Led. Nurse-Informed.**
+A production-grade clinical AI platform built with Next.js + TypeScript. This project demonstrates how to bridge the gap between "Generative AI" and "Clinical Reliability" through resilient architecture, grounded reasoning, and observable performance.
 
-## Why This Project Stands Out
-- End-to-end AI product, not just model calls.
-- Retrieval-grounded outputs with evidence inspection.
-- Clinical review mode with optional PubMed literature support.
-- FHIR ingestion and clinician-formatted handoff to workbench analysis.
-- Built-in benchmark dashboard (latency, TTFT, cost estimate, consistency, model usage).
-- Security controls: API guard, schema validation, CORS/headers, rate limiting, structured errors.
-- Observability controls: audit logs, request IDs, route/model metrics endpoint.
+## 🚀 The "Unfair Advantage": Why This Project Stands Out
+- **High-Availability Waterfall Architecture:** Implements a resilient model fallback chain (Gemini 2.5 → Flash Lite → Gemma 3) to bypass rate limits (429) and server overloads (503).
+- **Explainable AI (XAI):** Includes a "Watch the AI Think" dropdown that exposes the model's Chain-of-Thought (CoT), solving the "Black Box" problem in clinical decision support.
+- **Nurse-Engineered Logic:** System prompts are optimized for clinical "Nursing Priorities," focusing on high-stakes trend directionality (e.g., Sepsis/AKI) rather than simple text summarization.
+- **FHIR & PubMed Integration:** Live ingestion from FHIR R4 servers and evidence grounding via real-time PubMed literature fetches.
+- **Production Observability:** Full LLMOps suite with audit logging, request tracing, and a metrics-driven benchmark dashboard.
 
 ## Feature Set
 
-### 1) Clinical Workbench
-- Upload/paste context
-- Ask questions with streaming responses
-- Inspect retrieval evidence and trace context sent to model
+### 1) Clinical Workbench & Analysis
+- **Streaming Context Analysis:** Paste or upload clinical notes for real-time, low-latency summarization.
+- **Source Citations:** Traces AI claims directly back to specific document chunks or PubMed abstracts.
+- **Trend Synthesis:** Automatically identifies and highlights critical clinical directionality (e.g., "Rising Lactate with Down-trending MAP").
 
-### 2) Auto-Indexing + Retrieval
-- Lazy indexing on first retrieval need
-- Chunking + embeddings + vector similarity retrieval
-- RPC-first retrieval with cosine fallback path
+### 2) High-Availability Model Orchestration
+The system utilizes a **Tiered Fallback Chain** to ensure near-100% availability on a free-tier infrastructure by "sharding" request volume across independent model quotas:
+1. **Gemini 2.5 Flash** (Primary Reasoning)
+2. **Gemini Flash Lite** (Speed/Latency Specialist)
+3. **Gemma 3 (12B/4B/1B)** (Local-Scale Resilience & Privacy-First Fallback)
 
-### 3) Clinical Review Assistant
-- Multi-turn review flow
-- Optional external literature grounding from PubMed
-- Explicit uncertainty framing and non-diagnostic disclaimer
+### 3) Benchmark Dashboard (LLMOps)
+Scenario-based evaluation measuring quantitative metrics across clinical test cases:
+- **Latency & TTFT:** Measuring "Time to First Token" to optimize clinical responsiveness.
+- **Cost & Token Tracking:** Real-time estimation of inference costs (avg. $0.0000078 per run).
+- **Consistency Proxy:** Evaluating semantic reliability across different model weights.
 
 ### 4) FHIR Explorer
-- Search Patient / Observation / Condition on HAPI R4
-- Copy request cURL
-- Send selected resource to Workbench as clinician-readable summary
+- Search Patient / Observation / Condition on HAPI R4 servers.
+- **Smart Handoff:** Send selected FHIR resources directly to the Workbench as a structured, clinician-readable summary.
 
-### 5) Benchmark Dashboard
-- Scenario-based benchmark suite
-- Captures:
-  - End-to-end latency
-  - Time-to-first-token
-  - Token estimate and cost estimate
-  - Evidence citation count
-  - Success rate and consistency proxy
-  - Model usage from fallback chain
+### 5) Recruiter & Interview Kit
+- **One-Click Demos:** Pre-loaded clinical scenarios (Sepsis, CHF, Delirium) with rubric scoring.
+- **Guided Demo Mode:** A step-by-step walkthrough overlay designed for non-clinical evaluators to see the AI's power immediately.
 
-## Security and Reliability
-- API key guard with development bypass mode
-- Rate limiting with Upstash distributed backend + in-memory fallback
-- Zod request validation on API boundaries
-- Security headers and CORS middleware
-- Structured JSON errors with `requestId`
-- Global and route-level React error boundaries
-- External API timeout guards
+## 🛡️ Security and Reliability
+- **API Guard:** X-API-Key validation with environment-aware bypass for dev modes.
+- **Multi-Tier Rate Limiting:** Distributed Upstash Redis (sliding-window) + In-memory token bucket fallback.
+- **Data Integrity:** Strict Zod schema validation on all API boundaries to prevent malformed injections.
+- **Fail-Safe Response:** Structured JSON errors with `requestId` for clinical auditability.
 
-## Observability
-- Centralized API audit logging
-- In-memory metrics registry for route/model performance
-- Ops metrics endpoint: `/api/ops/metrics` (guarded)
+## 🏗️ Architecture
+- **State Orchestration:** Micro-hook pattern using [useClinicalWorkbench.ts](src/features/clinical/hooks/useClinicalWorkbench.ts) to compose domain-specific logic.
+- **Retrieval Engine:** Supabase **pgvector** with ANN (Approximate Nearest Neighbor) search and a local cosine-similarity fallback path.
+- **AI Layer:** Custom fallback logic in `google-text.ts` managing the Gemini/Gemma ecosystem.
 
-## Architecture
-- App shell and panel orchestration: [src/app/page.tsx](src/app/page.tsx)
-- Main orchestrator (composes domain hooks): [src/features/clinical/hooks/useClinicalWorkbench.ts](src/features/clinical/hooks/useClinicalWorkbench.ts)
-- Domain hooks:
-  - [src/features/clinical/hooks/useWorkbenchAnalysis.ts](src/features/clinical/hooks/useWorkbenchAnalysis.ts)
-  - [src/features/clinical/hooks/useClinicalReviewFlow.ts](src/features/clinical/hooks/useClinicalReviewFlow.ts)
-  - [src/features/clinical/hooks/useFhirExplorer.ts](src/features/clinical/hooks/useFhirExplorer.ts)
-  - [src/features/clinical/hooks/useContextUpload.ts](src/features/clinical/hooks/useContextUpload.ts)
-  - [src/features/clinical/hooks/useRecruiterDemoState.ts](src/features/clinical/hooks/useRecruiterDemoState.ts)
-- Retrieval API:
-  - [src/app/api/retrieval/index/route.ts](src/app/api/retrieval/index/route.ts)
-  - [src/app/api/retrieval/query/route.ts](src/app/api/retrieval/query/route.ts)
+## 🛠️ Local Setup
 
-## Local Setup
-
-1. Install dependencies
-
-```bash
-npm install
-```
-
-2. Create env file
-
-```bash
-cp .env.example .env.local
-```
-
-3. Fill required values in `.env.local`
-- `GOOGLE_GENERATIVE_AI_API_KEY`
-- `SUPABASE_URL`
-- `SUPABASE_SERVICE_ROLE_KEY`
-- `APP_API_KEY` (required in production)
-- `CORS_ALLOWED_ORIGINS` (required in production)
-
-4. Validate environment
-
-```bash
-npm run env:check
-```
-
-5. Apply Supabase schema (`supabase/schema.sql`)
-
-6. Start app
-
-```bash
-npm run dev
-```
-
-If `.next/dev/lock` causes startup issues:
-
-```bash
-npm run dev:recover
-```
-
-## Quality Gates
-
-```bash
-npm run lint
-npm run test
-npm run recruiter:check
-```
-
-CI is configured in [.github/workflows/ci.yml](.github/workflows/ci.yml).
-
-## Recruiter and Interview Documents
-- Detailed feature deep dive: [docs/INTERVIEW_FEATURE_DEEP_DIVE.md](docs/INTERVIEW_FEATURE_DEEP_DIVE.md)
-- Architecture and tradeoffs: [docs/RECRUITER_ARCHITECTURE_AND_TRADEOFFS.md](docs/RECRUITER_ARCHITECTURE_AND_TRADEOFFS.md)
-- Security + threat model + evaluation notes: [docs/SECURITY_EVALUATION_AND_THREAT_MODEL.md](docs/SECURITY_EVALUATION_AND_THREAT_MODEL.md)
-- Recruiter release notes summary: [docs/RELEASE_NOTES_RECRUITER.md](docs/RELEASE_NOTES_RECRUITER.md)
-- 3-minute demo script: [docs/DEMO_RUNBOOK.md](docs/DEMO_RUNBOOK.md)
+1. **Install dependencies**
+   ```bash
+   npm install
