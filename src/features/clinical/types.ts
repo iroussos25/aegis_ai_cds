@@ -9,9 +9,13 @@ export type HistoryItem = {
 
 export type RecruiterKit = {
   id: string;
+  category: string;
   title: string;
   summary: string;
-  samplePdfPath: string;
+  sampleAssetPath?: string;
+  sampleAssetLabel?: string;
+  noteLengthLabel?: string;
+  scoringRubric?: string[];
   sampleContext: string;
   prompts: string[];
 };
@@ -39,4 +43,11 @@ export type EvidenceItem = {
   similarity: number;
   chunkIndex: number;
   sourceLabel: string;
+};
+
+export type AnalysisTrace = {
+  prompt: string;
+  contextSent: string;
+  usedRetrieval: boolean;
+  indexedDocId: string | null;
 };

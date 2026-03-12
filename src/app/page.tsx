@@ -124,6 +124,7 @@ export default function Home() {
                   completion={vm.completion}
                   history={vm.history}
                   evidence={vm.evidence}
+                  analysisTrace={vm.analysisTrace}
                   retrievalEnabled={vm.retrievalEnabled}
                   setRetrievalEnabled={vm.setRetrievalEnabled}
                   indexing={vm.indexing}
@@ -150,6 +151,9 @@ export default function Home() {
                   kits={RECRUITER_KITS}
                   onLoad={handleLoadKit}
                   onStartDemo={handleStartDemo}
+                  rubricScores={vm.rubricScores}
+                  onSetRubricScore={vm.setRubricScore}
+                  onClearRubricScores={vm.clearKitRubricScores}
                 />
               </motion.div>
             )}

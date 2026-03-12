@@ -1,5 +1,13 @@
 import { useCallback, useMemo, useRef, useState } from "react";
-import { FhirBundle, FhirMode, FhirResource, HistoryItem, RecruiterKit, EvidenceItem } from "@/features/clinical/types";
+import {
+  AnalysisTrace,
+  EvidenceItem,
+  FhirBundle,
+  FhirMode,
+  FhirResource,
+  HistoryItem,
+  RecruiterKit,
+} from "@/features/clinical/types";
 
 export function useClinicalWorkbench() {
   const [context, setContext] = useState("");
@@ -14,6 +22,8 @@ export function useClinicalWorkbench() {
   const [isLoading, setIsLoading] = useState(false);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [evidence, setEvidence] = useState<EvidenceItem[]>([]);
+  const [analysisTrace, setAnalysisTrace] = useState<AnalysisTrace | null>(null);
+  const [rubricScores, setRubricScores] = useState<Record<string, Record<number, number>>>({});
 
   const [retrievalEnabled, setRetrievalEnabled] = useState(true);
   const [indexing, setIndexing] = useState(false);
@@ -61,6 +71,24 @@ export function useClinicalWorkbench() {
     setHistory([]);
   }, []);
 
+  const setRubricScore = useCallback((kitId: string, criterionIndex: number, score: number) => {
+    setRubricScores((prev) => ({
+      ...prev,
+      [kitId]: {
+        ...(prev[kitId] ?? {}),
+        [criterionIndex]: score,
+      },
+    }));
+  }, []);
+
+  const clearKitRubricScores = useCallback((kitId: string) => {
+    setRubricScores((prev) => {
+      const next = { ...prev };
+      delete next[kitId];
+      return next;
+    });
+  }, []);
+
   const clearAllState = useCallback(() => {
     abortRef.current?.abort();
     abortRef.current = null;
@@ -77,6 +105,8 @@ export function useClinicalWorkbench() {
     setIsLoading(false);
     setHistory([]);
     setEvidence([]);
+    setAnalysisTrace(null);
+    setRubricScores({});
 
     setRetrievalEnabled(true);
     setIndexing(false);
@@ -174,6 +204,7 @@ export function useClinicalWorkbench() {
     setIsLoading(true);
     setCompletion("");
     setApiError(null);
+    setAnalysisTrace(null);
 
     try {
       const retrieved = await fetchEvidence(promptSnapshot);
@@ -186,6 +217,13 @@ export function useClinicalWorkbench() {
               )
               .join("\n\n")
           : context;
+
+      setAnalysisTrace({
+        prompt: promptSnapshot,
+        contextSent: retrievalContext,
+        usedRetrieval: retrieved.length > 0,
+        indexedDocId,
+      });
 
       const res = await fetch("/api/analyze", {
         method: "POST",
@@ -256,6 +294,7 @@ export function useClinicalWorkbench() {
         setFileName(file.name);
         setIndexedDocId(null);
         setEvidence([]);
+        setAnalysisTrace(null);
       }
     } catch {
       setUploadError("Network error - could not upload file");
@@ -315,6 +354,7 @@ export function useClinicalWorkbench() {
     setCompletion("");
     setHistory([]);
     setIndexedDocId(null);
+    setAnalysisTrace(null);
   }
 
   function startDemoMode(kit?: RecruiterKit) {
@@ -350,6 +390,8 @@ export function useClinicalWorkbench() {
     isLoading,
     history,
     evidence,
+    analysisTrace,
+    rubricScores,
 
     retrievalEnabled,
     setRetrievalEnabled,
@@ -377,6 +419,8 @@ export function useClinicalWorkbench() {
     searchFhir,
     loadRecruiterKit,
     clearHistory,
+    setRubricScore,
+    clearKitRubricScores,
     clearAllState,
     indexCurrentContext,
     startDemoMode,

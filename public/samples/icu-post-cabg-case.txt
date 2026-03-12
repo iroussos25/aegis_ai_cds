@@ -1,0 +1,71 @@
+SYNTHETIC ICU CASE FILE
+Title: ICU Longitudinal Review - Post-CABG Cardiogenic Shock
+Version: Clinical Note v1.0 (Synthetic)
+
+Patient: Robert Gaines, 66M
+MRN: 7719403
+Admit: 2026-01-14
+CTICU: 2026-01-15 to 2026-01-29
+
+Chief clinical arc:
+- NSTEMI with critical left main/multivessel CAD
+- Urgent CABG x4
+- Refractory postcardiotomy cardiogenic shock
+- VA-ECMO rescue + temporary IABP support
+- Mediastinal bleeding/washout and transfusion burden
+- Prolonged ventilation with failed extubation then tracheostomy
+- AKI requiring CRRT with partial renal recovery
+- Small embolic/watershed strokes with cognitive and motor deficits
+- Anticoagulation balancing challenge with interval GI bleeding concern
+
+Day-level highlights:
+D0-D2:
+- Unable to separate cleanly from bypass; profound low-output shock
+- Lactate rose >7, SvO2 low, escalating pressors
+- VA-ECMO cannulated day 1, hemodynamics stabilized
+- Bleeding risk required frequent anticoagulation adjustments
+
+D3-D6:
+- OR washout for mediastinal hematoma; no graft failure found
+- Organ perfusion improved under ECMO support
+- Ramp studies showed improving biventricular function
+- ECMO decannulated successfully day 6
+
+D7-D12:
+- Oliguric AKI and volume overload led to CRRT initiation
+- AF with RVR treated with amiodarone
+- Ventilator-associated MSSA pneumonia treated per ID guidance
+- Failed extubation due to secretion burden and weakness
+- MRI identified multifocal small embolic/watershed infarcts
+
+D13-D18:
+- Tracheostomy placed to facilitate prolonged weaning
+- Gradual awakening and neurologic improvement
+- CRRT discontinued as urine output recovered
+- GI bleeding/ischemic colitis concern prompted temporary anticoagulation hold
+
+D19-D21:
+- No major recurrent bleed
+- Daytime trach collar tolerated, overnight minimal support
+- EF improved to upper 30s on repeat echocardiography
+- Transfer to cardiac step-down with persistent but improving multisystem deficits
+
+Key trend snapshots:
+- EF: peri-op ~20% -> transfer ~38%
+- Lactate: >7 early shock -> ~1.0 after support and recovery
+- Creatinine: baseline ~1.2, rose >3, partial recovery near 2.5 at transfer
+- Hemoglobin: repeated drops linked to bleeding episodes/procedures
+
+Open issues at transfer:
+- Ongoing ventilator liberation and trach care pathway
+- Recovery from mild stroke burden and ICU cognitive dysfunction
+- Incomplete renal recovery after CRRT
+- Anticoagulation strategy balancing AF/stroke risk vs recurrent bleeding
+- Reintroduction of heart failure guideline therapy as tolerated
+
+Reviewer prompts:
+1) Reconstruct the full hemodynamic support timeline and decannulation rationale.
+2) Explain anticoagulation decision changes across bleeding and stroke events.
+3) Justify CTICU transfer readiness while identifying unresolved risks.
+
+Note: This file is intentionally condensed for recruiter download. The in-app ICU case context includes a more detailed multi-section synthetic chart narrative.

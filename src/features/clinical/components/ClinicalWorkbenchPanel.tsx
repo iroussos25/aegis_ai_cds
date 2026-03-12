@@ -6,7 +6,7 @@ import remarkGfm from "remark-gfm";
 import { Card } from "@/components/ui/Card";
 import { EvidencePanel } from "@/features/clinical/components/EvidencePanel";
 import { ACCEPTED } from "@/features/clinical/constants";
-import { EvidenceItem, HistoryItem } from "@/features/clinical/types";
+import { AnalysisTrace, EvidenceItem, HistoryItem } from "@/features/clinical/types";
 import { highlightMatches } from "@/features/clinical/utils/highlightMatches";
 
 type ClinicalWorkbenchPanelProps = {
@@ -28,6 +28,7 @@ type ClinicalWorkbenchPanelProps = {
   completion: string;
   history: HistoryItem[];
   evidence: EvidenceItem[];
+  analysisTrace: AnalysisTrace | null;
 
   retrievalEnabled: boolean;
   setRetrievalEnabled: (value: boolean) => void;
@@ -59,6 +60,7 @@ export function ClinicalWorkbenchPanel({
   completion,
   history,
   evidence,
+  analysisTrace,
   retrievalEnabled,
   setRetrievalEnabled,
   indexing,
@@ -292,12 +294,51 @@ export function ClinicalWorkbenchPanel({
             transition={{ duration: 0.4 }}
           >
             <Card className="border-indigo-100 dark:border-indigo-900/40">
-              <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-indigo-500 dark:text-indigo-400">
-                Analysis
-              </h2>
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                <h2 className="text-sm font-semibold uppercase tracking-wider text-indigo-500 dark:text-indigo-400">
+                  Analysis
+                </h2>
+                <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-medium text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-300">
+                  Context-verified against loaded note
+                </span>
+              </div>
               <div className="prose prose-sm max-w-none prose-zinc dark:prose-invert">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>{completion}</ReactMarkdown>
               </div>
+
+              {analysisTrace && (
+                <details className="mt-4 rounded-xl border border-zinc-200 bg-zinc-50/70 p-3 dark:border-zinc-800 dark:bg-zinc-900/50">
+                  <summary className="cursor-pointer list-none text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                    Watch the AI Think
+                  </summary>
+                  <div className="mt-3 space-y-3 text-xs text-zinc-600 dark:text-zinc-300">
+                    <div className="flex flex-wrap gap-2">
+                      <span className="rounded-full bg-zinc-200 px-2 py-1 dark:bg-zinc-800">
+                        {analysisTrace.usedRetrieval ? "RAG context used" : "Full note context used"}
+                      </span>
+                      {analysisTrace.indexedDocId && (
+                        <span className="rounded-full bg-zinc-200 px-2 py-1 dark:bg-zinc-800">
+                          Doc ID: {analysisTrace.indexedDocId.slice(0, 8)}...
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      <p className="mb-1 font-medium text-zinc-700 dark:text-zinc-200">Prompt sent</p>
+                      <pre className="overflow-x-auto rounded-lg bg-white p-3 whitespace-pre-wrap text-[11px] leading-relaxed text-zinc-700 dark:bg-zinc-950 dark:text-zinc-300">
+                        {analysisTrace.prompt}
+                      </pre>
+                    </div>
+                    <div>
+                      <p className="mb-1 font-medium text-zinc-700 dark:text-zinc-200">
+                        Exact context sent to Gemini
+                      </p>
+                      <pre className="max-h-80 overflow-auto rounded-lg bg-white p-3 whitespace-pre-wrap text-[11px] leading-relaxed text-zinc-700 dark:bg-zinc-950 dark:text-zinc-300">
+                        {analysisTrace.contextSent}
+                      </pre>
+                    </div>
+                  </div>
+                </details>
+              )}
             </Card>
           </motion.div>
         )}

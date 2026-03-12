@@ -1,0 +1,69 @@
+SYNTHETIC ICU CASE FILE
+Title: ICU Longitudinal Review - Septic Shock and ARDS
+Version: Clinical Note v1.0 (Synthetic)
+
+Patient: Elena Marquez, 63F
+MRN: 8802147
+Admit: 2026-02-02
+ICU: 2026-02-02 to 2026-02-22
+
+Chief clinical arc:
+- Perforated sigmoid diverticulitis with feculent peritonitis
+- Emergent laparotomy + Hartmann procedure + washout
+- Septic shock with high vasopressor needs
+- Severe hypoxemic respiratory failure / ARDS requiring proning
+- Oliguric AKI on CKD requiring CRRT
+- Prolonged ventilation, failed extubation, tracheostomy
+- Delirium, sacral pressure injury, transfusion-requiring GI bleed episode
+- Gradual stabilization and transfer to step-down ventilator unit
+
+Day-level highlights:
+D1-D3:
+- Post-op shock on norepinephrine + vasopressin, stress-dose steroids
+- ARDS pattern with bilateral infiltrates; high PEEP strategy
+- CRRT started for oliguria, acidosis, hyperkalemia
+- Positive blood culture for Bacteroides fragilis
+
+D4-D7:
+- Residual pelvic collection identified, IR drain placed
+- Drain culture: ESBL E. coli + Enterococcus faecium
+- Antibiotic optimization with ID input
+- Shock physiology gradually improved; lactate normalized by day 7
+
+D8-D13:
+- Failed SBT due to weakness/secretion burden
+- Fever recurrence prompted repeat imaging; no major new source
+- Extubation trial failed and required re-intubation
+- Tracheostomy placed day 13 after family meeting
+
+D14-D18:
+- Progressive weaning to daytime pressure support/trach collar trials
+- CRRT discontinued, partial renal recovery
+- ICU-acquired weakness and delirium persisted
+- Melena with Hgb drop, EGD showed erosive gastritis
+
+D19-D22:
+- No recurrent major bleeding
+- Drains removed after source control deemed adequate
+- Inflammatory markers improved; broad antibiotics completed
+- Transferred to step-down on trach collar daytime / pressure support overnight
+
+Key trend snapshots:
+- Lactate: 6.8 -> 1.0 by transfer
+- Creatinine: baseline ~1.1-1.2, peak >3 while on shock/CRRT, transfer ~2.3
+- WBC: high 20s early, normalized to low teens by late ICU course
+- Platelets: nadir near 100 then recovered
+
+Open issues at transfer:
+- Ongoing ventilator wean via tracheostomy
+- AKI on CKD with incomplete renal recovery
+- Severe deconditioning and delirium recovery trajectory
+- Stage 2 sacral pressure injury
+- New colostomy education and discharge planning complexity
+
+Reviewer prompts:
+1) Build a timeline of source control, ventilation milestones, vasopressor course, and CRRT start/stop.
+2) Explain why tracheostomy became appropriate after failed extubation.
+3) Summarize unresolved risks at ICU transfer with supporting objective evidence.
+
+Note: This file is intentionally condensed for recruiter download. The in-app ICU case context includes a more detailed multi-section synthetic chart narrative.
