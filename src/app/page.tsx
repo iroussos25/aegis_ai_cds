@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
+import { NetworkStatusBanner } from "@/components/NetworkStatusBanner";
 import { AppSidebar } from "@/features/clinical/components/AppSidebar";
 import { ClinicalReviewPanel } from "@/features/clinical/components/ClinicalReviewPanel";
 import { ClinicalWorkbenchPanel } from "@/features/clinical/components/ClinicalWorkbenchPanel";
@@ -59,6 +60,8 @@ export default function Home() {
         <AppSidebar activePanel={activePanel} setActivePanel={setActivePanel} />
 
         <div className="space-y-8">
+          <NetworkStatusBanner />
+
           <motion.header
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}

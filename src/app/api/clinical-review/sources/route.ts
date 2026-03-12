@@ -1,4 +1,5 @@
 import { searchPubMedLiterature } from "@/lib/pubmed";
+import { validateServerEnv } from "@/lib/env";
 import { writeAuditLog } from "@/lib/security/audit";
 import { runSecurityGuard } from "@/lib/security/guard";
 import { parseAndValidateJson } from "@/lib/security/parse";
@@ -9,7 +10,18 @@ export async function POST(req: Request) {
   const requestId = getRequestId();
   const startedAt = Date.now();
 
-  const guard = runSecurityGuard(req, requestId, {
+  try {
+    validateServerEnv("core");
+  } catch (error) {
+    return createJsonError(
+      req,
+      500,
+      error instanceof Error ? error.message : "Environment validation failed",
+      requestId
+    );
+  }
+
+  const guard = await runSecurityGuard(req, requestId, {
     routeKey: "clinical-review-sources",
     maxRequests: 20,
     windowMs: 60_000,

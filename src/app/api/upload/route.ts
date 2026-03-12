@@ -1,4 +1,5 @@
 import { PDFParse } from "pdf-parse";
+import { validateServerEnv } from "@/lib/env";
 import { writeAuditLog } from "@/lib/security/audit";
 import { runSecurityGuard } from "@/lib/security/guard";
 import { createJsonError, createJsonOk, getRequestId } from "@/lib/security/response";
@@ -19,7 +20,18 @@ export async function POST(req: Request) {
   const requestId = getRequestId();
   const startedAt = Date.now();
 
-  const guard = runSecurityGuard(req, requestId, {
+  try {
+    validateServerEnv("core");
+  } catch (error) {
+    return createJsonError(
+      req,
+      500,
+      error instanceof Error ? error.message : "Environment validation failed",
+      requestId
+    );
+  }
+
+  const guard = await runSecurityGuard(req, requestId, {
     routeKey: "upload",
     maxRequests: 12,
     windowMs: 60_000,

@@ -1,4 +1,5 @@
 import { getSupabaseServerClient } from "@/lib/supabase-server";
+import { recordApiMetric } from "@/lib/observability/metrics";
 
 type AuditInput = {
   route: string;
@@ -8,6 +9,7 @@ type AuditInput = {
   status: number;
   durationMs: number;
   error?: string;
+  modelUsed?: string;
 };
 
 export async function writeAuditLog(input: AuditInput) {
@@ -23,6 +25,13 @@ export async function writeAuditLog(input: AuditInput) {
   };
 
   console.info("[api_audit]", payload);
+
+  recordApiMetric({
+    route: input.route,
+    status: input.status,
+    durationMs: input.durationMs,
+    modelUsed: input.modelUsed,
+  });
 
   if (process.env.ENABLE_DB_AUDIT_LOGS !== "true") {
     return;

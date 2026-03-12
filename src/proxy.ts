@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { createCorsHeaders, createSecurityHeaders } from "@/lib/security/headers";
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const isApiRequest = request.nextUrl.pathname.startsWith("/api/");
   const securityHeaders = createSecurityHeaders();
 

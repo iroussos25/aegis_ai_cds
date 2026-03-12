@@ -8,7 +8,7 @@ type GuardOptions = {
   windowMs: number;
 };
 
-export function runSecurityGuard(request: Request, requestId: string, options: GuardOptions) {
+export async function runSecurityGuard(request: Request, requestId: string, options: GuardOptions) {
   const ip = getClientIp(request);
   const auth = validateApiKey(request);
 
@@ -20,7 +20,7 @@ export function runSecurityGuard(request: Request, requestId: string, options: G
     };
   }
 
-  const limit = enforceRateLimit({
+  const limit = await enforceRateLimit({
     key: `${options.routeKey}:${ip}`,
     maxRequests: options.maxRequests,
     windowMs: options.windowMs,

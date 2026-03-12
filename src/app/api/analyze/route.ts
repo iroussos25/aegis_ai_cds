@@ -1,4 +1,5 @@
 import { generateGoogleText } from "@/lib/google-text";
+import { validateServerEnv } from "@/lib/env";
 import { writeAuditLog } from "@/lib/security/audit";
 import { runSecurityGuard } from "@/lib/security/guard";
 import { parseAndValidateJson } from "@/lib/security/parse";
@@ -19,7 +20,18 @@ export async function POST(req: Request) {
   const requestId = getRequestId();
   const startedAt = Date.now();
 
-  const guard = runSecurityGuard(req, requestId, {
+  try {
+    validateServerEnv("ai");
+  } catch (error) {
+    return createJsonError(
+      req,
+      500,
+      error instanceof Error ? error.message : "Environment validation failed",
+      requestId
+    );
+  }
+
+  const guard = await runSecurityGuard(req, requestId, {
     routeKey: "analyze",
     maxRequests: 50,
     windowMs: 60_000,
@@ -80,6 +92,7 @@ export async function POST(req: Request) {
       ip: guard.ip,
       status: response.status,
       durationMs: Date.now() - startedAt,
+      modelUsed: result.model,
     });
 
     return response;
