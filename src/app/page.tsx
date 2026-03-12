@@ -28,6 +28,10 @@ export default function Home() {
     setActivePanel("workbench");
   }
 
+  function handleOpenClinicalReview() {
+    setActivePanel("clinical-review");
+  }
+
   function handleClearAll() {
     const confirmed = window.confirm(
       "Clear all app data? This will reset context, analyses, retrieval state, and FHIR results."
@@ -128,14 +132,17 @@ export default function Home() {
                   analysisTrace={vm.analysisTrace}
                   retrievalEnabled={vm.retrievalEnabled}
                   setRetrievalEnabled={vm.setRetrievalEnabled}
+                  autoIndexEnabled={vm.autoIndexEnabled}
+                  setAutoIndexEnabled={vm.setAutoIndexEnabled}
                   indexing={vm.indexing}
                   indexError={vm.indexError}
                   indexedDocId={vm.indexedDocId}
+                  isIndexCurrent={vm.isIndexCurrent}
                   onUploadFile={vm.uploadFile}
                   onSubmitQuestion={vm.submitQuestion}
                   onCancelStreaming={vm.cancelStreaming}
-                  onIndexContext={vm.indexCurrentContext}
                   onClearHistory={vm.clearHistory}
+                  onOpenClinicalReview={handleOpenClinicalReview}
                 />
               </motion.div>
             )}

@@ -11,6 +11,17 @@ import {
   RecruiterKit,
 } from "@/features/clinical/types";
 
+function createContextSignature(context: string, fileName: string | null) {
+  let hash = 0;
+  const source = `${fileName ?? "manual"}\n${context}`;
+
+  for (let index = 0; index < source.length; index += 1) {
+    hash = (hash * 31 + source.charCodeAt(index)) >>> 0;
+  }
+
+  return hash.toString(16);
+}
+
 export function useClinicalWorkbench() {
   const [context, setContext] = useState("");
   const [fileName, setFileName] = useState<string | null>(null);
@@ -40,9 +51,11 @@ export function useClinicalWorkbench() {
   const [rubricScores, setRubricScores] = useState<Record<string, Record<number, number>>>({});
 
   const [retrievalEnabled, setRetrievalEnabled] = useState(true);
+  const [autoIndexEnabled, setAutoIndexEnabled] = useState(true);
   const [indexing, setIndexing] = useState(false);
   const [indexError, setIndexError] = useState<string | null>(null);
   const [indexedDocId, setIndexedDocId] = useState<string | null>(null);
+  const [indexedContextSignature, setIndexedContextSignature] = useState<string | null>(null);
 
   const [demoMode, setDemoMode] = useState(false);
   const [demoStep, setDemoStep] = useState(1);
@@ -62,6 +75,15 @@ export function useClinicalWorkbench() {
     const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     return (context.match(new RegExp(escaped, "gi")) ?? []).length;
   }, [search, context]);
+
+  const currentContextSignature = useMemo(
+    () => createContextSignature(context, fileName),
+    [context, fileName]
+  );
+
+  const isIndexCurrent = Boolean(
+    indexedDocId && indexedContextSignature === currentContextSignature
+  );
 
   const addHistoryItem = useCallback((prompt: string, response: string) => {
     const trimmedPrompt = prompt.trim();
@@ -137,9 +159,11 @@ export function useClinicalWorkbench() {
     setRubricScores({});
 
     setRetrievalEnabled(true);
+    setAutoIndexEnabled(true);
     setIndexing(false);
     setIndexError(null);
     setIndexedDocId(null);
+    setIndexedContextSignature(null);
 
     setDemoMode(false);
     setDemoStep(1);
@@ -163,7 +187,12 @@ export function useClinicalWorkbench() {
   async function indexCurrentContext() {
     if (!context.trim()) {
       setIndexError("Load or paste context before indexing.");
-      return;
+      return null;
+    }
+
+    if (isIndexCurrent && indexedDocId) {
+      setIndexError(null);
+      return { docId: indexedDocId, reusedExisting: true };
     }
 
     setIndexing(true);
@@ -185,9 +214,13 @@ export function useClinicalWorkbench() {
         throw new Error(data.error ?? "Vector indexing failed");
       }
 
-      setIndexedDocId(data.docId ?? null);
+      const nextDocId = data.docId ?? null;
+      setIndexedDocId(nextDocId);
+      setIndexedContextSignature(currentContextSignature);
+      return { docId: nextDocId, reusedExisting: false };
     } catch (error) {
       setIndexError(error instanceof Error ? error.message : "Vector indexing failed");
+      return null;
     } finally {
       setIndexing(false);
     }
@@ -197,11 +230,31 @@ export function useClinicalWorkbench() {
     prompt: string,
     options?: { updateWorkbenchEvidence?: boolean }
   ) {
-    if (!retrievalEnabled || !indexedDocId) {
+    if (!retrievalEnabled) {
       if (options?.updateWorkbenchEvidence !== false) {
         setEvidence([]);
       }
-      return [] as EvidenceItem[];
+      return {
+        evidence: [] as EvidenceItem[],
+        indexedDocId: null,
+      };
+    }
+
+    let docId = isIndexCurrent ? indexedDocId : null;
+
+    if (!docId && autoIndexEnabled) {
+      const indexResult = await indexCurrentContext();
+      docId = indexResult?.docId ?? null;
+    }
+
+    if (!docId) {
+      if (options?.updateWorkbenchEvidence !== false) {
+        setEvidence([]);
+      }
+      return {
+        evidence: [] as EvidenceItem[],
+        indexedDocId: null,
+      };
     }
 
     const res = await fetch("/api/retrieval/query", {
@@ -209,7 +262,7 @@ export function useClinicalWorkbench() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         query: prompt,
-        docId: indexedDocId,
+        docId,
         topK: 5,
       }),
     });
@@ -227,7 +280,10 @@ export function useClinicalWorkbench() {
       setEvidence(nextEvidence);
     }
 
-    return nextEvidence;
+    return {
+      evidence: nextEvidence,
+      indexedDocId: docId,
+    };
   }
 
   async function submitQuestion(e: React.FormEvent) {
@@ -244,7 +300,7 @@ export function useClinicalWorkbench() {
     setAnalysisTrace(null);
 
     try {
-      const retrieved = await fetchEvidence(promptSnapshot);
+      const { evidence: retrieved, indexedDocId: retrievalDocId } = await fetchEvidence(promptSnapshot);
       const retrievalContext =
         retrieved.length > 0
           ? retrieved
@@ -259,7 +315,7 @@ export function useClinicalWorkbench() {
         prompt: promptSnapshot,
         contextSent: retrievalContext,
         usedRetrieval: retrieved.length > 0,
-        indexedDocId,
+        indexedDocId: retrievalDocId,
       });
 
       const res = await fetch("/api/analyze", {
@@ -268,6 +324,7 @@ export function useClinicalWorkbench() {
         body: JSON.stringify({ prompt: promptSnapshot, context: retrievalContext }),
         signal: controller.signal,
       });
+      const resClone = res.clone();
 
       if (!res.ok) {
         const text = await res.text();
@@ -298,6 +355,21 @@ export function useClinicalWorkbench() {
       if (finalChunk) {
         streamedText += finalChunk;
         setCompletion((prev) => prev + finalChunk);
+      }
+
+      // Some environments complete the request but never surface incremental text chunks.
+      // Fall back to the buffered response so the final analysis still renders.
+      if (!streamedText.trim()) {
+        const bufferedText = await resClone.text();
+        if (bufferedText.trim()) {
+          streamedText = bufferedText;
+          setCompletion(bufferedText);
+        }
+      }
+
+      if (!streamedText.trim()) {
+        setApiError("Analysis completed but returned no visible content.");
+        return;
       }
 
       addHistoryItem(promptSnapshot, streamedText);
@@ -348,7 +420,9 @@ export function useClinicalWorkbench() {
     setClinicalReviewMessages((prev) => [...prev, userMessage, assistantMessage]);
 
     try {
-      const retrieved = await fetchEvidence(promptSnapshot, { updateWorkbenchEvidence: false });
+      const { evidence: retrieved, indexedDocId: retrievalDocId } = await fetchEvidence(promptSnapshot, {
+        updateWorkbenchEvidence: false,
+      });
 
       let literatureResult: {
         query?: string | null;
@@ -413,7 +487,7 @@ export function useClinicalWorkbench() {
         prompt: promptSnapshot,
         contextSent: combinedContext,
         usedRetrieval: retrieved.length > 0,
-        indexedDocId,
+        indexedDocId: retrievalDocId,
       });
 
       const res = await fetch("/api/clinical-review", {
@@ -496,7 +570,9 @@ export function useClinicalWorkbench() {
       } else {
         setContext(data.text);
         setFileName(file.name);
+        setAutoIndexEnabled(true);
         setIndexedDocId(null);
+        setIndexedContextSignature(null);
         setEvidence([]);
         setAnalysisTrace(null);
         clearClinicalReview();
@@ -558,7 +634,9 @@ export function useClinicalWorkbench() {
     setEvidence([]);
     setCompletion("");
     setHistory([]);
+    setAutoIndexEnabled(true);
     setIndexedDocId(null);
+    setIndexedContextSignature(null);
     setAnalysisTrace(null);
     clearClinicalReview();
   }
@@ -613,9 +691,12 @@ export function useClinicalWorkbench() {
 
     retrievalEnabled,
     setRetrievalEnabled,
+    autoIndexEnabled,
+    setAutoIndexEnabled,
     indexing,
     indexError,
     indexedDocId,
+    isIndexCurrent,
 
     demoMode,
     demoStep,

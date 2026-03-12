@@ -1,5 +1,4 @@
-import { streamText } from "ai";
-import { google } from "@ai-sdk/google";
+import { generateGoogleText } from "@/lib/google-text";
 
 type ExternalEvidenceInput = {
   title?: string;
@@ -87,15 +86,26 @@ export async function POST(req: Request) {
     return new Response("Invalid input", { status: 400 });
   }
 
-  const result = streamText({
-    model: google("gemini-2.5-flash"),
-    system: `${SYSTEM_PROMPT}\n\n<clinical_note_context>\n${cleanNoteContext}\n</clinical_note_context>${
-      cleanExternalContext
-        ? `\n\n<external_literature_context>\n${cleanExternalContext}\n</external_literature_context>`
-        : ""
-    }`,
-    messages: cleanMessages,
-  });
+  try {
+    const result = await generateGoogleText({
+      system: `${SYSTEM_PROMPT}\n\n<clinical_note_context>\n${cleanNoteContext}\n</clinical_note_context>${
+        cleanExternalContext
+          ? `\n\n<external_literature_context>\n${cleanExternalContext}\n</external_literature_context>`
+          : ""
+      }`,
+      messages: cleanMessages,
+    });
 
-  return result.toTextStreamResponse();
+    return new Response(result.text, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "X-Model-Used": result.model,
+      },
+    });
+  } catch (error) {
+    return new Response(
+      error instanceof Error ? error.message : "Clinical review failed",
+      { status: 500 }
+    );
+  }
 }

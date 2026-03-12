@@ -1,5 +1,4 @@
-import { streamText } from "ai";
-import { google } from "@ai-sdk/google";
+import { generateGoogleText } from "@/lib/google-text";
 
 const SYSTEM_PROMPT = `You are a Clinical Data Integrity Specialist. Your sole responsibility is to analyze and answer questions based strictly on the clinical document context provided below.
 
@@ -28,16 +27,27 @@ export async function POST(req: Request) {
   const cleanPrompt = prompt.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "").trim();
   const cleanContext = context.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "").trim();
 
-  const result = streamText({
-    model: google("gemini-2.5-flash"),
-    system: SYSTEM_PROMPT,
-    messages: [
-      {
-        role: "user",
-        content: `<clinical_document_context>\n${cleanContext}\n</clinical_document_context>\n\nQuestion: ${cleanPrompt}`,
-      },
-    ],
-  });
+  try {
+    const result = await generateGoogleText({
+      system: SYSTEM_PROMPT,
+      messages: [
+        {
+          role: "user",
+          content: `<clinical_document_context>\n${cleanContext}\n</clinical_document_context>\n\nQuestion: ${cleanPrompt}`,
+        },
+      ],
+    });
 
-  return result.toTextStreamResponse();
+    return new Response(result.text, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "X-Model-Used": result.model,
+      },
+    });
+  } catch (error) {
+    return new Response(
+      error instanceof Error ? error.message : "Clinical analysis failed",
+      { status: 500 }
+    );
+  }
 }

@@ -32,15 +32,18 @@ type ClinicalWorkbenchPanelProps = {
 
   retrievalEnabled: boolean;
   setRetrievalEnabled: (value: boolean) => void;
+  autoIndexEnabled: boolean;
+  setAutoIndexEnabled: (value: boolean) => void;
   indexing: boolean;
   indexError: string | null;
   indexedDocId: string | null;
+  isIndexCurrent: boolean;
 
   onUploadFile: (file: File) => Promise<void>;
   onSubmitQuestion: (e: React.FormEvent) => Promise<void>;
   onCancelStreaming: () => void;
-  onIndexContext: () => Promise<void>;
   onClearHistory: () => void;
+  onOpenClinicalReview: () => void;
 };
 
 export function ClinicalWorkbenchPanel({
@@ -63,14 +66,17 @@ export function ClinicalWorkbenchPanel({
   analysisTrace,
   retrievalEnabled,
   setRetrievalEnabled,
+  autoIndexEnabled,
+  setAutoIndexEnabled,
   indexing,
   indexError,
   indexedDocId,
+  isIndexCurrent,
   onUploadFile,
   onSubmitQuestion,
   onCancelStreaming,
-  onIndexContext,
   onClearHistory,
+  onOpenClinicalReview,
 }: ClinicalWorkbenchPanelProps) {
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -103,22 +109,34 @@ export function ClinicalWorkbenchPanel({
             <button
               type="button"
               disabled={indexing || !context.trim()}
-              onClick={onIndexContext}
-              className="rounded-lg bg-cyan-600 px-3 py-2 text-xs font-medium text-white hover:bg-cyan-500 disabled:opacity-50"
+              onClick={() => setAutoIndexEnabled(!autoIndexEnabled)}
+              className={`rounded-lg px-3 py-2 text-xs font-medium text-white disabled:opacity-50 ${
+                autoIndexEnabled ? "bg-cyan-600 hover:bg-cyan-500" : "bg-zinc-600 hover:bg-zinc-500"
+              }`}
             >
-              {indexing ? "Indexing..." : "Index Current Context"}
+              {indexing
+                ? "Indexing..."
+                : autoIndexEnabled
+                  ? "Skip Auto-Indexing"
+                  : "Enable Auto-Indexing"}
             </button>
-            {indexedDocId && (
+            {indexedDocId && isIndexCurrent && (
               <span className="rounded bg-zinc-100 px-2 py-1 text-[10px] text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
                 Indexed: {indexedDocId.slice(0, 8)}...
+              </span>
+            )}
+            {indexedDocId && !isIndexCurrent && (
+              <span className="rounded bg-amber-50 px-2 py-1 text-[10px] text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+                Index out of date
               </span>
             )}
           </div>
         </div>
 
         <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-          Indexing turns this document into searchable AI vectors so question answers can use the
-          most relevant chunks with citations.
+          {autoIndexEnabled
+            ? "This note will auto-index the first time retrieval is needed, so analyses can use the most relevant chunks with citations."
+            : "Auto-indexing is off. Analyses will fall back to the full note unless you turn auto-indexing back on."}
         </p>
 
         {indexError && <p className="mt-2 text-xs text-red-500">Error: {indexError}</p>}
@@ -286,7 +304,7 @@ export function ClinicalWorkbenchPanel({
       </AnimatePresence>
 
       <AnimatePresence>
-        {completion && (
+        {(isLoading || completion) && (
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -303,8 +321,22 @@ export function ClinicalWorkbenchPanel({
                 </span>
               </div>
               <div className="prose prose-sm max-w-none prose-zinc dark:prose-invert">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{completion}</ReactMarkdown>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {completion || (isLoading ? "Analyzing..." : "")}
+                </ReactMarkdown>
               </div>
+
+              {completion && (
+                <div className="mt-4 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={onOpenClinicalReview}
+                    className="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-100 dark:border-indigo-900/50 dark:bg-indigo-950/40 dark:text-indigo-300 dark:hover:bg-indigo-950/60"
+                  >
+                    Continue In Clinical Review
+                  </button>
+                </div>
+              )}
 
               {analysisTrace && (
                 <details className="mt-4 rounded-xl border border-zinc-200 bg-zinc-50/70 p-3 dark:border-zinc-800 dark:bg-zinc-900/50">
