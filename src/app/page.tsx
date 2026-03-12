@@ -114,6 +114,7 @@ export default function Home() {
                   onSubmitQuestion={vm.submitQuestion}
                   onCancelStreaming={vm.cancelStreaming}
                   onIndexContext={vm.indexCurrentContext}
+                  onClearHistory={vm.clearHistory}
                 />
               </motion.div>
             )}

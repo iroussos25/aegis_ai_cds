@@ -39,6 +39,7 @@ type ClinicalWorkbenchPanelProps = {
   onSubmitQuestion: (e: React.FormEvent) => Promise<void>;
   onCancelStreaming: () => void;
   onIndexContext: () => Promise<void>;
+  onClearHistory: () => void;
 };
 
 export function ClinicalWorkbenchPanel({
@@ -67,6 +68,7 @@ export function ClinicalWorkbenchPanel({
   onSubmitQuestion,
   onCancelStreaming,
   onIndexContext,
+  onClearHistory,
 }: ClinicalWorkbenchPanelProps) {
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -307,9 +309,18 @@ export function ClinicalWorkbenchPanel({
             transition={{ duration: 0.3 }}
           >
             <Card>
-              <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-                Recent Analyses
-              </h2>
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+                  Recent Analyses
+                </h2>
+                <button
+                  type="button"
+                  onClick={onClearHistory}
+                  className="rounded-lg border border-zinc-300 px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                >
+                  Clear
+                </button>
+              </div>
 
               <div className="space-y-3">
                 {history.map((item) => (

@@ -100,6 +100,10 @@ export function useClinicalWorkbench() {
     );
   }, []);
 
+  const clearHistory = useCallback(() => {
+    setHistory([]);
+  }, []);
+
   function cancelStreaming() {
     abortRef.current?.abort();
     abortRef.current = null;
@@ -314,9 +318,11 @@ export function useClinicalWorkbench() {
   function loadRecruiterKit(kit: RecruiterKit, prompt?: string) {
     setContext(kit.sampleContext);
     setFileName(`${kit.title} (sample)`);
-    if (prompt) setInput(prompt);
+    setInput(prompt ?? "");
     setSearch("");
     setEvidence([]);
+    setCompletion("");
+    setHistory([]);
     setIndexedDocId(null);
   }
 
@@ -379,6 +385,7 @@ export function useClinicalWorkbench() {
     cancelStreaming,
     searchFhir,
     loadRecruiterKit,
+    clearHistory,
     indexCurrentContext,
     startDemoMode,
     advanceDemoStep,
