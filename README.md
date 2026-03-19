@@ -1,3 +1,5 @@
+> 📊 **Note:** This repository is part of a **Comparative Engineering Study**. For the full performance benchmark, architectural breakdown, and deployment analysis, see the [Aegis Master Project](https://github.com/iroussos25/aegis-project).
+---
 # Clinical Context Analyst 🩺
 
 [![CI](https://github.com/iroussos25/ai-clinical-context-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/iroussos25/ai-clinical-context-agent/actions/workflows/ci.yml)
