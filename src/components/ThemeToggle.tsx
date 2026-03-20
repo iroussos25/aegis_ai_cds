@@ -1,29 +1,70 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 type Theme = "light" | "dark";
+const THEME_CHANGE_EVENT = "aegis-theme-change";
 
-function getInitialTheme(): Theme {
-  if (typeof window === "undefined") return "light";
-
+function getPreferredTheme(): Theme {
   const stored = localStorage.getItem("theme");
   if (stored === "dark" || stored === "light") return stored;
 
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
-export function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>(getInitialTheme);
+function getThemeSnapshot(): Theme {
+  if (typeof window === "undefined") {
+    return "light";
+  }
 
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", theme === "dark");
-    localStorage.setItem("theme", theme);
-  }, [theme]);
+  if (document.documentElement.classList.contains("dark")) {
+    return "dark";
+  }
+
+  return getPreferredTheme();
+}
+
+function subscribe(onStoreChange: () => void): () => void {
+  if (typeof window === "undefined") {
+    return () => {};
+  }
+
+  const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+  const handleThemeChange = () => onStoreChange();
+  const handleStorage = (event: StorageEvent) => {
+    if (event.key === "theme") {
+      onStoreChange();
+    }
+  };
+  const handleMediaChange = () => {
+    if (!localStorage.getItem("theme")) {
+      onStoreChange();
+    }
+  };
+
+  window.addEventListener(THEME_CHANGE_EVENT, handleThemeChange);
+  window.addEventListener("storage", handleStorage);
+  mediaQuery.addEventListener("change", handleMediaChange);
+
+  return () => {
+    window.removeEventListener(THEME_CHANGE_EVENT, handleThemeChange);
+    window.removeEventListener("storage", handleStorage);
+    mediaQuery.removeEventListener("change", handleMediaChange);
+  };
+}
+
+function applyTheme(theme: Theme) {
+  document.documentElement.classList.toggle("dark", theme === "dark");
+  localStorage.setItem("theme", theme);
+  window.dispatchEvent(new Event(THEME_CHANGE_EVENT));
+}
+
+export function ThemeToggle() {
+  const theme = useSyncExternalStore(subscribe, getThemeSnapshot, () => "light");
 
   function toggle() {
     const next: Theme = theme === "dark" ? "light" : "dark";
-    setTheme(next);
+    applyTheme(next);
   }
 
   return (

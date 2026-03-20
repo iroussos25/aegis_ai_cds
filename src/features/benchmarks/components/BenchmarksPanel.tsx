@@ -157,18 +157,24 @@ export function BenchmarksPanel() {
             </div>
 
             {/* Export Buttons */}
-            <div className="flex gap-2">
+            <div className="grid grid-cols-3 gap-2">
               <button
                 onClick={() => exportResults("json")}
-                className="flex-1 px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 font-medium text-sm transition-colors"
+                className="w-full px-3 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 font-medium text-sm transition-colors"
               >
                 Export JSON
               </button>
               <button
                 onClick={() => exportResults("csv")}
-                className="flex-1 px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 font-medium text-sm transition-colors"
+                className="w-full px-3 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 font-medium text-sm transition-colors"
               >
                 Export CSV
+              </button>
+              <button
+                onClick={() => exportResults("pdf")}
+                className="w-full px-3 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 font-medium text-sm transition-colors"
+              >
+                Export PDF
               </button>
             </div>
 
