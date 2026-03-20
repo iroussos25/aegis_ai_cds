@@ -1,3 +1,5 @@
+> 📊 **Note:** This repository is part of a **Comparative Engineering Study**. For the full performance benchmark, architectural breakdown, and deployment analysis, see the [Aegis Master Project](https://github.com/iroussos25/aegis-project).
+---
 # 🛡️ Aegis AI: Clinical Decision Support (CDS) Interface
 
 ### **Next.js 14 | TypeScript | LLMOps | FHIR R4**
