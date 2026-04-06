@@ -1,6 +1,6 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 
 type Theme = "light" | "dark";
 const THEME_CHANGE_EVENT = "aegis-theme-change";
@@ -61,9 +61,17 @@ function applyTheme(theme: Theme) {
 
 export function ThemeToggle() {
   const theme = useSyncExternalStore(subscribe, getThemeSnapshot, () => "light");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
+
+  // Use "light" until after hydration to match the server snapshot and avoid
+  // React error #418.  The layout inline script already applies the correct
+  // class to <html>, so there is no visible flash.
+  const display: Theme = mounted ? theme : "light";
 
   function toggle() {
-    const next: Theme = theme === "dark" ? "light" : "dark";
+    const next: Theme = display === "dark" ? "light" : "dark";
     applyTheme(next);
   }
 
@@ -71,10 +79,10 @@ export function ThemeToggle() {
     <button
       type="button"
       onClick={toggle}
-      aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+      aria-label={`Switch to ${display === "dark" ? "light" : "dark"} mode`}
       className="rounded-lg border border-zinc-300 p-2 text-zinc-600 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
     >
-      {theme === "dark" ? (
+      {display === "dark" ? (
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
           <circle cx="12" cy="12" r="5" />
           <line x1="12" y1="1" x2="12" y2="3" />
